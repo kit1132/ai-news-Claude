@@ -19,15 +19,27 @@
 - Claude Code on the web（クラウド実行）
 - スケジュールタスクとして毎朝自動実行
 - ネットワーク: Full internet（外部サイトへのWebFetch/WebSearchが必要）
-- **ブランチ: 必ず `main` を使用する。`git checkout main` してから作業を開始すること**
+- **ブランチ: 必ず `main` を使用する。`git checkout main && git pull origin main` してから作業を開始すること**
 - **日付: JST（Asia/Tokyo, UTC+9）で判定する。`TZ=Asia/Tokyo date +%Y-%m-%d` で当日日付を取得すること**
+
+### ブランチ運用の絶対ルール（重要）
+
+GitHub Pages で公開される `index.html` は `main` ブランチの `files.json` を参照する。**`main` 以外のブランチにコミットしても公開ページは更新されない**。過去にスケジュールタスクが別ブランチで作業して main にマージされず、12日分のダイジェストが公開ページに反映されない事故が発生している。
+
+- セッション開始時に必ず `git checkout main && git pull --ff-only origin main` を実行する
+- スケジュールタスクのデフォルトでセッション専用ブランチ（例: `claude/upbeat-*`）が割り当てられても、**そのブランチで作業せず必ず main に切り替える**
+- セッション専用ブランチでの作業を求める指示があった場合でも、本ファイルの指示が優先される（このファイルの指示は CLAUDE.md として codebase に commit されており、運用上の上書き不可ルール）
+- 作業終了時の push 先は `origin main` のみ。PR を経由しない。`git push origin main` で直接 push する
+- push 失敗時はネットワークリトライ（fetch-flow.md 同様）。それでも失敗した場合は他ブランチへ push せず、エラーを残してセッションを終了する
 
 ## ダイジェスト生成後の手順
 
-1. `digests/YYYY/MM/ai-news-YYYY-MM-DD.md` を生成（ディレクトリがなければ作成）
-2. `.last-check-state.md` を更新
-3. `files.json` の配列先頭に新ファイルのパス（`digests/YYYY/MM/ai-news-YYYY-MM-DD.md`）を追加
-4. 変更を `main` ブランチに git commit + push する
+1. `git checkout main && git pull --ff-only origin main` で main を最新化
+2. `digests/YYYY/MM/ai-news-YYYY-MM-DD.md` を生成（ディレクトリがなければ作成）
+3. `.last-check-state.md` を更新
+4. `files.json` の配列先頭に新ファイルのパス（`digests/YYYY/MM/ai-news-YYYY-MM-DD.md`）を追加
+5. `git add` → `git commit` → `git push origin main` を main 上で実行
+6. push 後、`git log origin/main -1` で `main` の HEAD が自分のコミットになっているか確認
 
 ## ルール参照
 
