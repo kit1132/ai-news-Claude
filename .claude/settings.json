@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -d .git ]; then current=$(git rev-parse --abbrev-ref HEAD 2>/dev/null); if [ \"$current\" != \"main\" ]; then echo \"[session-start] HEAD was on '$current', forcing checkout to main\" >&2; git fetch origin main --depth=1 >/dev/null 2>&1 || true; git checkout main >/dev/null 2>&1 || true; git pull --ff-only origin main >/dev/null 2>&1 || true; echo \"[session-start] now on $(git rev-parse --abbrev-ref HEAD)\" >&2; fi; fi"
+          }
+        ]
+      }
+    ]
+  }
+}

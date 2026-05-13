@@ -19,15 +19,49 @@
 - Claude Code on the web（クラウド実行）
 - スケジュールタスクとして毎朝自動実行
 - ネットワーク: Full internet（外部サイトへのWebFetch/WebSearchが必要）
-- **ブランチ: 必ず `main` を使用する。`git checkout main` してから作業を開始すること**
 - **日付: JST（Asia/Tokyo, UTC+9）で判定する。`TZ=Asia/Tokyo date +%Y-%m-%d` で当日日付を取得すること**
+
+## ⚠️ ブランチ運用（最重要・絶対ルール）
+
+**過去に 2 回、スケジュールタスクが feature branch（`claude/upbeat-ramanujan-*` / `claude/brave-franklin-*`）に digest を push して main にマージされず、GitHub Pages に最新ダイジェストが反映されない事故を起こしている。同じ事故を二度と起こさないため、以下を絶対ルールとする。**
+
+### 開始時（毎セッション必ず）
+
+```bash
+TZ=Asia/Tokyo date +%Y-%m-%d        # 当日日付を取得
+git fetch origin main --depth=1
+git checkout main
+git pull --ff-only origin main
+git rev-parse --abbrev-ref HEAD     # → 必ず `main` であることを確認
+```
+
+`.claude/settings.json` の SessionStart hook が自動で `main` への checkout を試みるが、**ハードコードに頼らず自分でも上記コマンドを必ず実行して確認すること**。
+
+### コミット・push（毎回必ず）
+
+digest 生成・`.last-check-state.md` 更新・`files.json` 更新が終わったら:
+
+```bash
+git add digests/ .last-check-state.md files.json
+git commit -m "Add AI news digest for YYYY-MM-DD"
+git push origin HEAD:main           # ← 必ず main に直接 push する
+```
+
+**`git push` 単体（リモート追跡ブランチへの push）は禁止**。必ず `HEAD:main` 形式を使う。これにより、たとえ作業が feature branch 上であっても結果は main に反映される。
+
+### 禁止事項
+
+- `git checkout -b <new-branch>` — 新規ブランチを切らない
+- `git push origin <feature-branch>` — feature branch にだけ push しない
+- PR 作成して放置 — 自動マージしないので main に反映されない
+- main 以外のブランチで作業終了 — どんな状況でも最後は main に push する
 
 ## ダイジェスト生成後の手順
 
 1. `digests/YYYY/MM/ai-news-YYYY-MM-DD.md` を生成（ディレクトリがなければ作成）
 2. `.last-check-state.md` を更新
 3. `files.json` の配列先頭に新ファイルのパス（`digests/YYYY/MM/ai-news-YYYY-MM-DD.md`）を追加
-4. 変更を `main` ブランチに git commit + push する
+4. **`git push origin HEAD:main` で main に直接 push する**（上の絶対ルール参照）
 
 ## ルール参照
 
